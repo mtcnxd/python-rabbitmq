@@ -1,49 +1,21 @@
-from datetime import datetime
 from classes.rabbitmq import RabbitMQ
-import configuration
-import pika
+from datetime import datetime
 import time
 import random
-import json
 
-# Parámetros de conexión
-credentials = pika.PlainCredentials(
-    configuration.rabbitmq_user,
-    configuration.rabbitmq_pass
-)
+rabbitmq = RabbitMQ()
+rabbitmq.set_queue_declare('sensors')
 
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(
-        host=configuration.rabbitmq_host,
-        port=configuration.rabbitmq_port,
-        virtual_host='/',
-        credentials=credentials
-    )
-)
-
-channel = connection.channel()
-
-# Declare a queue to ensure it exists
-channel.queue_declare(queue='sensors')
-
-
-# Publish a message
-for i in range(50):
-    message = {
+for i in range(20):
+    payload = {
         "id": i,
-        "client_name" : "Marcos Tzuc",
+        "client_name": "Juan Tzuc",
         "client_enabled": True,
         "value": random.randint(1, 100),
         "created_at": datetime.now().isoformat()
     }
-        
-    channel.basic_publish(
-        exchange='', 
-        routing_key='sensors', 
-        body=json.dumps(message)
-    )
-    
-    print(f"Sent data {message}")
+
+    rabbitmq.publish('', 'sensors', payload)
     time.sleep(0.05)
 
-connection.close()
+rabbitmq.close_connection()

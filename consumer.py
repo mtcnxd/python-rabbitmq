@@ -1,42 +1,17 @@
-import configuration
-import pika
-import time
-import json
-
-credentials = pika.PlainCredentials(
-    configuration.rabbitmq_user,
-    configuration.rabbitmq_pass
-)
-
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(
-        host=configuration.rabbitmq_host,
-        port=configuration.rabbitmq_port,
-        virtual_host='/',
-        credentials=credentials
-    )
-)
-
-channel = connection.channel()
-
-channel.queue_declare(queue='sensors')
+from classes.rabbitmq import RabbitMQ
+from datetime import datetime
+from json import loads
 
 def callback(ch, method, properties, body):
     data_received = body.decode()
-
-    print(f"Message body: {data_received}")
-
-    json_data = json.loads(data_received)
-
-    # print(f"Mensaje id: {json_data['id']} with value: {json_data['value']}")
+    json_data = loads(data_received)
     ch.basic_ack(delivery_tag=method.delivery_tag)
-    time.sleep(0.2)
+    print(json_data)
 
-channel.basic_consume(
-    queue='sensors',
-    on_message_callback=callback,
-    auto_ack=False
-)
+rabbitmq = RabbitMQ()
+rabbitmq.set_queue_declare('sensors')
 
-print('Esperando mensajes...')
-channel.start_consuming()
+rabbitmq.consume(callback)
+
+rabbitmq.start_consuming()
+rabbitmq.close_connection()

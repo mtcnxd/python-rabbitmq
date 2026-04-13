@@ -3,7 +3,7 @@ import pika
 import json
 
 class RabbitMQ:
-    def __init__(self, channel_name):        
+    def __init__(self):
         credentials = pika.PlainCredentials(
             configuration.rabbitmq_user,
             configuration.rabbitmq_pass
@@ -19,28 +19,32 @@ class RabbitMQ:
         )
 
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=channel_name)
 
-    def set_channel_name(self, channel_name):
-        self.channel_name = channel_name
+    def set_queue_declare(self, queue_name):
+        self.channel.queue_declare(queue=queue_name)
 
-    def set_routing_key(self, routing_key):
-        self.routing_key = routing_key
-
-    def publish(self, payload):
+    def publish(self, exchange, routing_key, payload):
         self.channel.basic_publish(
-            exchange='', 
-            routing_key=self.routing_key, 
+            exchange=exchange, 
+            routing_key=routing_key, 
             body=json.dumps(payload)
         )
+        print(f"Message body: {payload}")
 
-    def consume(self, callback):
+    def consume(self, callback, auto_ack=False):
         self.channel.basic_consume(
             queue='sensors',
             on_message_callback=callback,
-            auto_ack=False
+            auto_ack=auto_ack
         )
 
-    def callback(ch, method, properties, body):
+    def callback(self, ch, method, properties, body):
         data_received = body.decode()
-        print(f"Message body: {data_received}")
+        print(f"Internal body: {data_received}")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def start_consuming(self):
+        self.channel.start_consuming()
+
+    def close_connection(self):
+        self.connection.close()
