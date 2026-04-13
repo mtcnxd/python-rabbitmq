@@ -1,4 +1,5 @@
 from datetime import datetime
+from classes.rabbitmq import RabbitMQ
 import configuration
 import pika
 import time
@@ -27,7 +28,7 @@ channel.queue_declare(queue='sensors')
 
 
 # Publish a message
-for i in range(500):
+for i in range(50):
     message = {
         "id": i,
         "client_name" : "Marcos Tzuc",
@@ -43,6 +44,6 @@ for i in range(500):
     )
     
     print(f"Sent data {message}")
-    time.sleep(0.1)
+    time.sleep(0.05)
 
 connection.close()
