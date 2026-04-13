@@ -1,12 +1,18 @@
+import configuration
 import pika
 import time
 import json
 
-credentials = pika.PlainCredentials('user', 'password')
+credentials = pika.PlainCredentials(
+    configuration.rabbitmq_user,
+    configuration.rabbitmq_pass
+)
 
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(
-        host='192.168.1.123',
+        host=configuration.rabbitmq_host,
+        port=configuration.rabbitmq_port,
+        virtual_host='/',
         credentials=credentials
     )
 )

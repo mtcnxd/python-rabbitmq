@@ -6,7 +6,10 @@ import random
 import json
 
 # Parámetros de conexión
-credentials = pika.PlainCredentials('user', 'password')
+credentials = pika.PlainCredentials(
+    configuration.rabbitmq_user,
+    configuration.rabbitmq_pass
+)
 
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(
@@ -22,24 +25,24 @@ channel = connection.channel()
 # Declare a queue to ensure it exists
 channel.queue_declare(queue='sensors')
 
-# Publish a message
 
+# Publish a message
 for i in range(500):
     message = {
         "id": i,
         "client_name" : "Marcos Tzuc",
-        "client_status": "enabled",
+        "client_enabled": True,
         "value": random.randint(1, 100),
         "created_at": datetime.now().isoformat()
     }
         
     channel.basic_publish(
-        exchange='amq.topic', 
-        routing_key='sensors.*', 
+        exchange='', 
+        routing_key='sensors', 
         body=json.dumps(message)
     )
     
-    print(f"Sent data {i}")
-    time.sleep(0.5)
+    print(f"Sent data {message}")
+    time.sleep(0.1)
 
 connection.close()
